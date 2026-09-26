@@ -102,7 +102,8 @@ export interface SystemEvent {
   timestamp: number;
   category: string;
   message: string;
-  severity: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
+  severity?: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
+  level?: string;
   entity_id?: string | null;
 }
 
@@ -202,4 +203,15 @@ export interface CompactRobot {
   battery: number;
   current_task: string;
   heading: number;
+}
+
+export interface FleetStateResponse {
+  metrics: FleetMetrics;
+  robots: RobotDetail[];
+  tasks: Task[];
+  recent_events: SystemEvent[];
+  active_conflicts: ConflictEvent[];
+  recent_deadlocks: DeadlockEvent[];
+  recent_failures: RobotFailureEvent[];
+  recent_bids: BidDetail[];
 }

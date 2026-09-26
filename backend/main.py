@@ -34,7 +34,8 @@ async def simulation_loop():
                     "active_conflicts": [c.model_dump() for c in full_state.active_conflicts],
                     "recent_deadlocks": [d.model_dump() for d in full_state.recent_deadlocks],
                     "recent_failures": [f.model_dump() for f in full_state.recent_failures],
-                    "recent_bids": [b.model_dump() for b in full_state.recent_bids[:6]],
+                    "recent_bids": [b.model_dump() for b in full_state.recent_bids[:12]],
+                    "tasks": [t.model_dump() for t in sim.tasks[:60]],
                 }
                 data_str = json.dumps(payload)
                 for ws in list(connected_clients):
@@ -97,9 +98,39 @@ def get_state():
 def get_robots(limit: int = Query(500, le=1000)):
     return [a.data for a in sim.agents[:limit]]
 
+class CreateTaskRequest(BaseModel):
+    priority: str = "NORMAL"
+    pickup_x: float = 0.0
+    pickup_y: float = 0.0
+    drop_x: float = 40.0
+    drop_y: float = 40.0
+    payload: float = 25.0
+    required_capability: str = "STANDARD_CARRIER"
+    deadline: float = 300.0
+
 @app.get("/api/tasks")
 def get_tasks(limit: int = Query(200, le=1000)):
     return sim.tasks[:limit]
+
+@app.post("/api/tasks")
+async def create_task(req: CreateTaskRequest):
+    task, winner, bids, evt = await sim.create_custom_task(
+        priority=req.priority,
+        pickup_x=req.pickup_x,
+        pickup_y=req.pickup_y,
+        drop_x=req.drop_x,
+        drop_y=req.drop_y,
+        payload=req.payload,
+        required_capability=req.required_capability,
+        deadline=req.deadline
+    )
+    return {
+        "status": "CREATED",
+        "task": task.model_dump(),
+        "winner": winner.data.id if winner else None,
+        "bids": [b.model_dump() for b in bids],
+        "event": evt.model_dump() if evt else None
+    }
 
 @app.get("/api/metrics", response_model=FleetMetrics)
 def get_metrics():

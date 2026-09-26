@@ -194,6 +194,50 @@ class SimulationEngine:
         # Seed initial system event
         self._add_event("SYSTEM", f"FleetMind initialized with {len(self.agents)} AMRs, {len(self.tasks)} Tasks across 25 industrial zones.", "INFO")
 
+    async def create_custom_task(self, priority: str, pickup_x: float, pickup_y: float, drop_x: float, drop_y: float, payload: float, required_capability: str, deadline: float = 300.0):
+        """Creates a custom task, enters it into the negotiation pool, conducts auction, and assigns winner."""
+        async with self.lock:
+            tid = f"T{len(self.tasks)+1:03d}"
+            try:
+                prio_enum = TaskPriority(priority)
+            except Exception:
+                prio_enum = TaskPriority.NORMAL
+
+            task = Task(
+                id=tid,
+                pickup_x=round(pickup_x, 1),
+                pickup_y=round(pickup_y, 1),
+                drop_x=round(drop_x, 1),
+                drop_y=round(drop_y, 1),
+                priority=prio_enum,
+                deadline=round(deadline, 1),
+                payload=payload,
+                required_capability=required_capability,
+                status=TaskStatus.QUEUED,
+                created_at=round(self.sim_time, 1)
+            )
+
+            self.tasks.insert(0, task)
+            self.tasks_by_id[tid] = task
+
+            # Conduct auction with existing backend negotiation engine
+            winner, bids, evt = self.negotiation_engine.conduct_auction(
+                task, self.agents, self.sim_time, is_coordinator_online=self.coordinator_online
+            )
+
+            if winner:
+                winner.data.current_task = task.id
+                winner.data.status = RobotStatus.ASSIGNED
+                winner.data.target_x = task.pickup_x
+                winner.data.target_y = task.pickup_y
+                winner.data.planned_path = [[winner.data.x, winner.data.y], [task.pickup_x, task.pickup_y], [task.drop_x, task.drop_y]]
+
+            if evt:
+                self.system_events.append(evt)
+            self._add_event("OPERATOR", f"Operator created task {tid} ({priority}, {payload}kg). Winner: {winner.data.id if winner else 'None'}", "INFO", tid)
+
+            return task, winner, bids, evt
+
     def _add_event(self, category: str, message: str, severity: str = "INFO", entity_id: Optional[str] = None) -> None:
         evt = SystemEvent(
             id=f"evt_{len(self.system_events)+1:04d}_{int(self.sim_time)}",
