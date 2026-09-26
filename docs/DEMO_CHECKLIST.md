@@ -1,0 +1,27 @@
+# FleetMind Demo Checklist
+
+Use this checklist during live hackathon presentations and jury reviews:
+
+- [x] Backend starts (`python -m uvicorn backend.main:app --port 8000`)
+- [x] Frontend starts (`npm run dev` at `http://localhost:5173`)
+- [x] WebSocket connected (`ws://localhost:8000/ws` @ 10Hz)
+- [x] 500 robots visible (4 heterogeneous types rendered on Canvas)
+- [x] Tasks active (pickup/delivery locations across 25 zones)
+- [x] Emergency Surge works (STEP 1 broadcasts 25 priority tasks)
+- [x] Negotiation bids visible (candidate scores displayed in panel)
+- [x] Task winner visible (winning AMR and reason breakdown)
+- [x] Corridor conflict works (STEP 2 injects contention in Corridor C07)
+- [x] Collision prediction visible (ETA and distance warning cones)
+- [x] Right-of-way works (yielding robot decelerates and waits)
+- [x] Deadlock trigger works (STEP 3 circular wait `R21 -> R43 -> R82 -> R21`)
+- [x] Deadlock resolution works (deterministic siding yield in <0.3s)
+- [x] Battery drain works (STEP 4 drains `R023` to 17%)
+- [x] Battery reassignment works (`Decision: REASSIGN`, routes to charger)
+- [x] Robot failure works (STEP 5 marks `R127` offline)
+- [x] Task recovery works (100% of affected tasks reassigned to peers)
+- [x] Coordinator failure works (Central Coordinator toggle to OFFLINE)
+- [x] Local autonomy continues (AMRs negotiate P2P without stopping)
+- [x] Metrics update (all 16 telemetry metrics calculated dynamically)
+- [x] Reset works (returns simulation cleanly to initial seed state)
+- [x] No browser console errors (clean React lifecycle)
+- [x] No backend exceptions (robust asyncio loop)
